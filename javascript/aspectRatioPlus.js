@@ -14,7 +14,6 @@ const _IMAGE_INPUT_CONTAINER_IDS = [
     "img_inpaint_base"
 ];
 
-
 // Utility functions
 const getSelectedImage2ImageTab = () => {
     const mode = gradioApp().getElementById("mode_img2img");
@@ -37,13 +36,10 @@ const reverseAspectRatio = (ar) =>
 
 const clampToBoundaries = (w, h) => {
     const ratio = w / h;
-
     w = Math.min(Math.max(w, _MIN), _MAX);
     h = Math.min(Math.max(h, _MIN), _MAX);
-
     if (w / h > ratio) h = Math.round(w / ratio);
     else if (w / h < ratio) w = Math.round(h * ratio);
-
     return [
         Math.min(Math.max(w, _MIN), _MAX),
         Math.min(Math.max(h, _MIN), _MAX)
@@ -62,7 +58,6 @@ const reverseAllOptions = () => {
         }
     });
 };
-
 
 // ====== Slider Controller ======
 class SliderController {
@@ -84,19 +79,46 @@ class OptionPickingController {
         this.page = page;
         this.ctrl = ctrl;
         this.options = this.prepareOptions(defaultOptions);
-        this.switchBtn = gradioApp().getElementById(`${page}_res_switch_btn`);
 
+        // Original switch button
+        const origBtn = gradioApp().getElementById(`${page}_res_switch_btn`);
+
+        // Wrapper container
         const wrap = document.createElement("div");
         wrap.id = `${page}_size_toolbox`;
         wrap.className = "flex flex-col relative col gap-4";
         wrap.style = "min-width: min(320px, 100%); flex-grow: 0";
-        wrap.innerHTML = this.getElementInnerHTML();
 
-        this.switchBtn.replaceWith(wrap);
-        wrap.appendChild(this.switchBtn);
+        // Container for aspect ratio select
+        const ratioBox = document.createElement("div");
+        ratioBox.id = `${page}_ratio`;
+        ratioBox.className = "gr-block gr-box relative w-full border border-gray-200 gr-padded";
 
-        this.getPicker().onchange = this.onPickerChange();
-        this.switchBtn.onclick = this.onSwitchClick();
+        // Aspect ratio <select>
+        const select = document.createElement("select");
+        select.id = `${page}_select_aspect_ratio`;
+        select.className = "gr-box gr-input w-full";
+        select.innerHTML = this.options.map(r => `<option class="ar-option">${r}</option>`).join("");
+
+        ratioBox.appendChild(select);
+
+        // Clone the original switch button to keep styles
+        const clonedBtn = origBtn.cloneNode(true);
+        clonedBtn.id = `${page}_res_switch_btn`;
+
+        // Append ratio select first, then the button
+        wrap.appendChild(ratioBox);
+        wrap.appendChild(clonedBtn);
+
+        // Replace original button with wrapper
+        origBtn.replaceWith(wrap);
+
+        // Save reference to the cloned button
+        this.switchBtn = clonedBtn;
+
+        // Attach event listeners
+        select.addEventListener("change", this.onPickerChange());
+        this.switchBtn.addEventListener("click", this.onSwitchClick());
     }
 
     prepareOptions(defaultOptions) {
@@ -106,9 +128,7 @@ class OptionPickingController {
     onPickerChange() {
         return () => {
             const picked = this.current();
-            if (picked !== _IMAGE) {
-                this.switchBtn.removeAttribute("disabled");
-            }
+            if (picked !== _IMAGE) this.switchBtn.removeAttribute("disabled");
             this.ctrl.setAspectRatio(picked);
         };
     }
@@ -125,17 +145,6 @@ class OptionPickingController {
         };
     }
 
-    getElementInnerHTML() {
-        return `
-        <div id="${this.page}_ratio"
-             class="gr-block gr-box relative w-full border border-gray-200 gr-padded">
-            <select id="${this.page}_select_aspect_ratio"
-                    class="gr-box gr-input w-full">
-                ${this.options.map(r => `<option class="ar-option">${r}</option>`).join("")}
-            </select>
-        </div>`;
-    }
-
     getPicker() {
         return gradioApp().getElementById(`${this.page}_select_aspect_ratio`);
     }
@@ -144,8 +153,6 @@ class OptionPickingController {
         return this.getPicker().value;
     }
 }
-
-
 
 // ====== Aspect Ratio Controller ======
 class AspectRatioController {
@@ -181,9 +188,7 @@ class AspectRatioController {
         this.aspectRatio = ar;
         let wR, hR;
 
-        if (ar === _OFF) {
-            return this.disable();
-        }
+        if (ar === _OFF) return this.disable();
 
         if (ar === _IMAGE) {
             const img = getCurrentImage();
@@ -226,26 +231,18 @@ class AspectRatioController {
 
         if (!changed) {
             const maxVal = Math.max(...this.inputs.map(x => +x.value));
-            if (this.isLandscape()) {
-                [w, h] = [maxVal, maxVal / aspect];
-            } else {
-                [h, w] = [maxVal, maxVal * aspect];
-            }
+            if (this.isLandscape()) [w, h] = [maxVal, maxVal / aspect];
+            else [h, w] = [maxVal, maxVal * aspect];
         } else if (changed.isWidth) {
-            w = +changed.value;
-            h = w / aspect;
+            w = +changed.value; h = w / aspect;
         } else {
-            h = +changed.value;
-            w = h * aspect;
+            h = +changed.value; w = h * aspect;
         }
 
         const [W, H] = clampToBoundaries(w, h);
         const ev = new Event("input", { bubbles: true });
-
-        this.w.setVal(W);
-        this.w.trigger(ev);
-        this.h.setVal(H);
-        this.h.trigger(ev);
+        this.w.setVal(W); this.w.trigger(ev);
+        this.h.setVal(H); this.h.trigger(ev);
 
         [...this.w.inputs, ...this.h.inputs].forEach(inp =>
             dimensionChange({ target: inp }, inp.isWidth, !inp.isWidth)
@@ -259,7 +256,6 @@ class AspectRatioController {
 
             if (wEl && hEl && window.opts?.arp_javascript_aspect_ratio_show !== undefined) {
                 obs.disconnect();
-
                 if (!window.opts.arp_javascript_aspect_ratio_show) return;
 
                 const c = new AspectRatioController(page, wEl, hEl, defaults);
@@ -272,16 +268,13 @@ class AspectRatioController {
     }
 }
 
-
 // ====== Helpers for img2img ======
 const addImg2ImgTabSwitchClickListeners = (ctrl) => {
     document
         .querySelectorAll("#img2img_settings button:not(.selected):not(.hasTabSwitchListener)")
         .forEach(btn => {
             btn.addEventListener("click", () => {
-                if (ctrl.optionCtrl.current() === _IMAGE) {
-                    ctrl.setAspectRatio(_IMAGE);
-                }
+                if (ctrl.optionCtrl.current() === _IMAGE) ctrl.setAspectRatio(_IMAGE);
                 addImg2ImgTabSwitchClickListeners(ctrl);
             });
             btn.classList.add("hasTabSwitchListener");
@@ -305,7 +298,6 @@ const postImageControllerSetupFunction = (ctrl) => {
 
     addImg2ImgTabSwitchClickListeners(ctrl);
 };
-
 
 // ====== Init ======
 onUiLoaded(() => {

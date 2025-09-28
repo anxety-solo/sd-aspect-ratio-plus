@@ -1,32 +1,31 @@
-#txt2img_size_toolbox, #img2img_size_toolbox {
+#txt2img_size_toolbox,
+#img2img_size_toolbox {
     min-width: unset !important;
-    gap: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
-#txt2img_ratio, #img2img_ratio {
-    padding: 0px;
+#txt2img_ratio,
+#img2img_ratio {
+    padding: 0;
     min-width: unset;
     max-width: fit-content;
+    border-radius: 8px;
 }
 
-#txt2img_ratio select, #img2img_ratio select {
+#txt2img_ratio select,
+#img2img_ratio select {
+    padding: 8px 4px;
     background: var(--background-fill-primary);
     border: 1px solid var(--block-border-color);
     color: var(--block-label-text-color);
-    -webkit-appearance: none;
-    -moz-appearance: none;
     appearance: none;
     background-image: none;
-    tab-size: 4;
     font-size: 14px;
     line-height: 1.4;
     box-sizing: border-box;
-    position: relative;
     border-radius: 8px;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    padding-right: 1px;
-    margin-bottom: 10px;
-    padding-left: 2px;
     text-align: center;
-    min-width: 2.5em;
 }
