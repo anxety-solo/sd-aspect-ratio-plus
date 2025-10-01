@@ -47,7 +47,7 @@ const clampToBoundaries = (w, h) => {
 };
 
 const getOptions = () =>
-    window.opts.arp_javascript_aspect_ratio.split(",").map(o => o.trim());
+    window.opts.arp_aspect_ratio.split(",").map(o => o.trim());
 
 const reverseAllOptions = () => {
     document.querySelectorAll(".ar-option").forEach(el => {
@@ -254,9 +254,9 @@ class AspectRatioController {
             const wEl = gradioApp().querySelector(`#${page}_width`);
             const hEl = gradioApp().querySelector(`#${page}_height`);
 
-            if (wEl && hEl && window.opts?.arp_javascript_aspect_ratio_show !== undefined) {
+            if (wEl && hEl && window.opts?.arp_aspect_ratio_show !== undefined) {
                 obs.disconnect();
-                if (!window.opts.arp_javascript_aspect_ratio_show) return;
+                if (!window.opts.arp_aspect_ratio_show) return;
 
                 const c = new AspectRatioController(page, wEl, hEl, defaults);
                 post(c);
