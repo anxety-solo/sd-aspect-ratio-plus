@@ -137,6 +137,16 @@ class OptionPickingController {
         return () => {
             reverseAllOptions();
             const picked = this.current();
+
+            if (picked === _OFF) {
+                // When Off is selected, just swap width and height values
+                const currentWidth = this.ctrl.w.val();
+                const currentHeight = this.ctrl.h.val();
+                this.ctrl.w.setVal(currentHeight);
+                this.ctrl.h.setVal(currentWidth);
+                return;
+            }
+
             this.ctrl.setAspectRatio(
                 picked === _LOCK
                     ? `${this.ctrl.heightRatio}:${this.ctrl.widthRatio}`
