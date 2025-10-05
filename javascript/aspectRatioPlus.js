@@ -54,6 +54,226 @@ const reverseAllOptions = () => {
     });
 };
 
+// ====== Presets Parser & Popup Controller ======
+
+const parsePresets = (presetsText) => {
+    const autoLabel = !!window.opts?.arp_presets_autolabel;
+    const lines = presetsText
+        .split('\n')
+        .map(l => l.trim())
+        .filter(l => l && !l.startsWith('#'));
+
+    const sections = [];
+    let current = null;
+
+    for (const line of lines) {
+        if (line.startsWith('>')) {
+            if (current) sections.push(current);
+            current = { label: line.slice(1).trim(), presets: [] };
+        } else if (/^\d+\s*x\s*\d+$/i.test(line)) {
+            const [w, h] = line.split(/\s*x\s*/i).map(Number);
+            if (!current) {
+                current = {
+                    label: autoLabel ? 'Others' : '',
+                    presets: [],
+                };
+            }
+            current.presets.push({ width: w, height: h });
+        }
+    }
+
+    if (current) sections.push(current);
+    return sections;
+};
+
+class PresetsPopupController {
+    constructor(page, ctrl) {
+        this.page = page;
+        this.ctrl = ctrl;
+        this.popup = null;
+    }
+
+    show(buttonElement) {
+        if (this.popup) {
+            this.close();
+            return;
+        }
+
+        const presets = parsePresets(window.opts.arp_presets || '');
+        const columns = Math.min(Math.max(1, Number(window.opts?.arp_presets_columns || 2)), 4);
+
+        this.popup = document.createElement('div');
+        this.popup.className = 'arp-presets-popup';
+        this.popup.style.opacity = '0';
+        this.popup.style.pointerEvents = 'none';
+        document.body.appendChild(this.popup);
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'arp-presets-header';
+        const title = document.createElement('div');
+        title.className = 'arp-presets-title';
+        title.textContent = 'Dimension Presets';
+        const headerButtons = document.createElement('div');
+        headerButtons.className = 'arp-header-buttons';
+
+        const settingsBtn = document.createElement('button');
+        settingsBtn.className = 'arp-presets-settings';
+        settingsBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>`;
+        settingsBtn.title = 'Open Settings';
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.openSettings();
+        });
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'arp-presets-close';
+        closeBtn.innerHTML = '×';
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.close();
+        });
+
+        headerButtons.appendChild(settingsBtn);
+        headerButtons.appendChild(closeBtn);
+        header.appendChild(title);
+        header.appendChild(headerButtons);
+
+        // Content
+        const content = document.createElement('div');
+        content.className = 'arp-presets-content';
+
+        // Build sections
+        presets.forEach(section => {
+            if (!section.presets || section.presets.length === 0) return;
+
+            const sectionDiv = document.createElement('div');
+            sectionDiv.className = 'arp-presets-section';
+
+            if (section.label) {
+                const label = document.createElement('div');
+                label.className = 'arp-presets-section-label';
+                label.textContent = section.label;
+                sectionDiv.appendChild(label);
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'arp-presets-grid';
+            grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+
+            section.presets.forEach(preset => {
+                const btn = document.createElement('button');
+                btn.className = 'arp-preset-btn';
+                btn.textContent = `${preset.width} × ${preset.height}`;
+                btn.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    this.applyPreset(preset.width, preset.height);
+                    this.close();
+                });
+                grid.appendChild(btn);
+            });
+
+            sectionDiv.appendChild(grid);
+            content.appendChild(sectionDiv);
+        });
+
+        this.popup.appendChild(header);
+        this.popup.appendChild(content);
+
+        // Position popup with respect to viewport and button
+        this.positionPopup(buttonElement);
+
+        this.popup.style.opacity = '1';
+        this.popup.style.pointerEvents = 'auto';
+
+        // Event listeners
+        setTimeout(() => {
+            document.addEventListener('click', this.outsideClickHandler);
+            document.addEventListener('keydown', this.escKeyHandler);
+        }, 0);
+    }
+
+    positionPopup(buttonElement) {
+        const rect = buttonElement.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        const { width: pw, height: ph } = this.popup.getBoundingClientRect();
+
+        let left = rect.right + 8;
+        let top = rect.top;
+
+        if (left + pw > vw - 8) left = rect.left - pw - 8;
+        left = Math.max(8, Math.min(left, vw - pw - 8));
+
+        if (top + ph > vh - 8) top = rect.top - ph - 8;
+        top = Math.max(8, Math.min(top, vh - ph - 8));
+
+        Object.assign(this.popup.style, {
+            left: `${Math.round(left)}px`,
+            top: `${Math.round(top)}px`
+        });
+    }
+
+    close() {
+        if (this.popup) {
+            this.popup.remove();
+            this.popup = null;
+            document.removeEventListener('click', this.outsideClickHandler);
+            document.removeEventListener('keydown', this.escKeyHandler);
+        }
+    }
+
+    outsideClickHandler = (e) => {
+        if (this.popup && !this.popup.contains(e.target) && !e.target.closest('#txt2img_presets_btn')) {
+            this.close();
+        }
+    }
+
+    escKeyHandler = (e) => {
+        if (e.key === 'Escape' && this.popup) {
+            this.close();
+        }
+    }
+
+    applyPreset(width, height) {
+        // Set ratio select to OFF
+        if (this.ctrl.optionCtrl?.ratioSelect) {
+            this.ctrl.optionCtrl.ratioSelect.value = _OFF;
+            this.ctrl.setAspectRatio(_OFF);
+            this.ctrl.updateLimits();
+            this.ctrl.maintainAspectRatio(); // reset sync
+        }
+
+        // Apply dimensions
+        this.ctrl.w.setVal(width);
+        this.ctrl.h.setVal(height);
+
+        const ev = new Event('input', { bubbles: true });
+        this.ctrl.w.trigger(ev);
+        this.ctrl.h.trigger(ev);
+    }
+
+    openSettings() {
+        // open settings tab and Aspect Ratio+ section
+        const settingsTab = Array.from(gradioApp().querySelectorAll('#tabs > .tab-nav button'))
+            .find(button => button.textContent.trim() === 'Settings');
+
+        if (settingsTab) {
+            settingsTab.click();
+            setTimeout(() => {
+                const aspectRatioSection = Array.from(gradioApp().querySelectorAll('#tab_settings #settings .tab-nav button'))
+                    .find(button => button.textContent.trim() === 'Aspect Ratio+');
+
+                if (aspectRatioSection) {
+                    aspectRatioSection.click();
+                }
+            }, 100);
+        }
+        this.close();
+    }
+}
+
 // ====== Slider Controller ======
 class SliderController {
     constructor(el) {
@@ -95,11 +315,42 @@ class OptionPickingController {
 
         const select = document.createElement('select');
         select.id = `${this.page}_select_aspect_ratio`;
+        select.title = 'Aspect Ratio';
         select.innerHTML = this.options.map((r) => `<option class="ar-option">${r}</option>`).join('');
         ratioBox.appendChild(select);
 
-        // Append select first, then swap button
+        // Append select box first
         wrap.appendChild(ratioBox);
+
+        // Add presets button for txt2img only (between ratio select and swap button)
+        if (this.page === 'txt2img' && window.opts?.arp_presets_show) {
+            // Box for presets button
+            const presetsBox = document.createElement('div');
+            presetsBox.id = `${this.page}_presets_box`;
+
+            const presetsBtn = document.createElement('button');
+            presetsBtn.id = `${this.page}_presets_btn`;
+            presetsBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="3" width="8" height="8" rx="1"/>
+                    <rect x="13" y="3" width="8" height="8" rx="1"/>
+                    <rect x="3" y="13" width="8" height="8" rx="1"/>
+                    <rect x="13" y="13" width="8" height="8" rx="1"/>
+                </svg>
+            `;
+            presetsBtn.title = 'Dimension Presets';
+
+            const popupCtrl = new PresetsPopupController(this.page, this.ctrl);
+            presetsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                popupCtrl.show(presetsBtn);
+            });
+
+            presetsBox.appendChild(presetsBtn);
+            wrap.appendChild(presetsBox);
+        }
+
+        // Then append swap button
         wrap.appendChild(swapBtn);
 
         // Replace original button with wrapper
@@ -244,14 +495,14 @@ class AspectRatioController {
         }
 
         const [W, H] = clampToBoundaries(w, h);
-        const ev = new Event('input', {bubbles: true});
+        const ev = new Event('input', { bubbles: true });
         this.w.setVal(W);
         this.w.trigger(ev);
         this.h.setVal(H);
         this.h.trigger(ev);
 
         [...this.w.inputs, ...this.h.inputs].forEach((inp) =>
-            dimensionChange({target: inp}, inp.isWidth, !inp.isWidth)
+            dimensionChange({ target: inp }, inp.isWidth, !inp.isWidth)
         );
     }
 
@@ -270,7 +521,7 @@ class AspectRatioController {
             }
         });
 
-        obs.observe(gradioApp(), {childList: true, subtree: true});
+        obs.observe(gradioApp(), { childList: true, subtree: true });
     }
 }
 
