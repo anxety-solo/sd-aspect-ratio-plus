@@ -38,7 +38,7 @@ DEFAULT_VALUES = {
 }
 
 def get_preset_lines():
-    text = getattr(opts, ARP_PRESETS_KEY) or DEFAULT_PRESETS
+    text = getattr(opts, ARP_PRESETS_KEY, DEFAULT_PRESETS) or DEFAULT_PRESETS
     lines = text.count('\n') + 1
     return max(5, min(40, lines))
 

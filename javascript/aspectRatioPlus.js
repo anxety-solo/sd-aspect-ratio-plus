@@ -60,8 +60,8 @@ const parsePresets = (presetsText) => {
     const autoLabel = !!window.opts?.arp_presets_autolabel;
     const lines = presetsText
         .split('\n')
-        .map(l => l.trim())
-        .filter(l => l && !l.startsWith('#'));
+        .map((l) => l.trim())
+        .filter((l) => l && !l.startsWith('#'));
 
     const sections = [];
     let current = null;
@@ -144,7 +144,7 @@ class PresetsPopupController {
         content.className = 'arp-presets-content';
 
         // Build sections
-        presets.forEach(section => {
+        presets.forEach((section) => {
             if (!section.presets || section.presets.length === 0) return;
 
             const sectionDiv = document.createElement('div');
@@ -161,7 +161,7 @@ class PresetsPopupController {
             grid.className = 'arp-presets-grid';
             grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
 
-            section.presets.forEach(preset => {
+            section.presets.forEach((preset) => {
                 const btn = document.createElement('button');
                 btn.className = 'arp-preset-btn';
                 btn.textContent = `${preset.width} × ${preset.height}`;
@@ -211,7 +211,7 @@ class PresetsPopupController {
 
         Object.assign(this.popup.style, {
             left: `${Math.round(left)}px`,
-            top: `${Math.round(top)}px`
+            top: `${Math.round(top)}px`,
         });
     }
 
@@ -228,21 +228,21 @@ class PresetsPopupController {
         if (this.popup && !this.popup.contains(e.target) && !e.target.closest('#txt2img_presets_btn')) {
             this.close();
         }
-    }
+    };
 
     escKeyHandler = (e) => {
         if (e.key === 'Escape' && this.popup) {
             this.close();
         }
-    }
+    };
 
     applyPreset(width, height) {
         // Set ratio select to OFF
         if (this.ctrl.optionCtrl?.ratioSelect) {
             this.ctrl.optionCtrl.ratioSelect.value = _OFF;
             this.ctrl.setAspectRatio(_OFF);
-            this.ctrl.updateLimits();
-            this.ctrl.maintainAspectRatio(); // reset sync
+            this.ctrl.widthRatio = null;
+            this.ctrl.heightRatio = null;
         }
 
         // Apply dimensions
@@ -257,13 +257,13 @@ class PresetsPopupController {
     openSettings() {
         // open settings tab and Aspect Ratio+ section
         const settingsTab = Array.from(gradioApp().querySelectorAll('#tabs > .tab-nav button'))
-            .find(button => button.textContent.trim() === 'Settings');
+            .find((button) => button.textContent.trim() === 'Settings');
 
         if (settingsTab) {
             settingsTab.click();
             setTimeout(() => {
                 const aspectRatioSection = Array.from(gradioApp().querySelectorAll('#tab_settings #settings .tab-nav button'))
-                    .find(button => button.textContent.trim() === 'Aspect Ratio+');
+                    .find((button) => button.textContent.trim() === 'Aspect Ratio+');
 
                 if (aspectRatioSection) {
                     aspectRatioSection.click();
@@ -439,9 +439,15 @@ class AspectRatioController {
 
     setAspectRatio(ar) {
         this.aspectRatio = ar;
-        let wR, hR;
 
-        if (ar === _OFF) return this.disable();
+        if (ar === _OFF) {
+            this.widthRatio = null;
+            this.heightRatio = null;
+            this.disable();
+            return;
+        }
+
+        let wR, hR;
 
         if (ar === _IMAGE) {
             const img = getCurrentImage();
