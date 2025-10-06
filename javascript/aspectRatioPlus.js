@@ -380,20 +380,30 @@ class OptionPickingController {
 
         // Swap internal ratio values
         [this.ctrl.widthRatio, this.ctrl.heightRatio] = [this.ctrl.heightRatio, this.ctrl.widthRatio];
-        this.ctrl.updateLimits();
 
         // Reverse all AR options visually
         reverseAllOptions();
 
         const picked = this.current();
-        if (picked === _OFF) return;
-        if (picked === _LOCK) {
-            this.ctrl.widthRatio = this.ctrl.w.val();
-            this.ctrl.heightRatio = this.ctrl.h.val();
-            this.ctrl.updateLimits();
+        if (picked === _OFF) {
+            // Trigger events to update UI
+            const ev = new Event('input', { bubbles: true });
+            this.ctrl.w.trigger(ev);
+            this.ctrl.h.trigger(ev);
             return;
         }
 
+        if (picked === _LOCK) {
+            // Update limits after swap
+            this.ctrl.updateLimits();
+            // Trigger events to update UI
+            const ev = new Event('input', { bubbles: true });
+            this.ctrl.w.trigger(ev);
+            this.ctrl.h.trigger(ev);
+            return;
+        }
+
+        // For aspect ratio strings (e.g., "16:9")
         const parsed = aspectRatioFromStr(picked);
         if (parsed) {
             const [wR, hR] = parsed;
@@ -401,6 +411,10 @@ class OptionPickingController {
             this.ctrl.widthRatio = cwR;
             this.ctrl.heightRatio = chR;
             this.ctrl.updateLimits();
+            // Trigger events to update UI
+            const ev = new Event('input', { bubbles: true });
+            this.ctrl.w.trigger(ev);
+            this.ctrl.h.trigger(ev);
         }
     }
 
@@ -507,9 +521,12 @@ class AspectRatioController {
         this.h.setVal(H);
         this.h.trigger(ev);
 
-        [...this.w.inputs, ...this.h.inputs].forEach((inp) =>
-            dimensionChange({ target: inp }, inp.isWidth, !inp.isWidth)
-        );
+        // Call dimensionChange for each input (if it exists)
+        [...this.w.inputs, ...this.h.inputs].forEach((inp) => {
+            if (typeof dimensionChange !== 'undefined') {
+                dimensionChange({ target: inp }, inp.isWidth, !inp.isWidth);
+            }
+        });
     }
 
     static observeStartup(key, page, defaults, post = () => {}) {
