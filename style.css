@@ -2,17 +2,21 @@
 #img2img_size_toolbox {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 6px !important;
 }
 
 /* Shit Style :3 */
-/* #txt2img_ratio select, */
-/* #img2img_ratio select, */
+#txt2img_ratio select,
+#img2img_ratio select,
 #txt2img_presets_btn,
 #txt2img_res_switch_btn,
-#img2img_res_switch_btn {
-    width: 35px !important;
-    /* height: 35px !important; */
+#img2img_res_switch_btn,
+#img2img_detect_image_size_btn {
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    max-height: 36px !important;
     box-sizing: border-box !important;
 }
 #txt2img_ratio select:focus,
@@ -29,7 +33,7 @@
     box-sizing: border-box;
     padding: 10px 4px;
     font-size: 14px;
-    line-height: 1.2;
+    line-height: 1.1;
     text-align: center;
     color: var(--block-label-text-color);
     background-image: none;
@@ -78,6 +82,7 @@
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     z-index: 1000;
+    user-select: none;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
