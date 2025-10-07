@@ -1,3 +1,8 @@
+:root {
+    /* === UI Button Size === */
+    --btn-size: 36px;
+}
+
 #txt2img_size_toolbox,
 #img2img_size_toolbox {
     display: flex;
@@ -13,17 +18,17 @@
 #txt2img_res_switch_btn,
 #img2img_res_switch_btn,
 #img2img_detect_image_size_btn {
-    width: 36px !important;
-    min-width: 36px !important;
-    height: 36px !important;
-    max-height: 36px !important;
+    width: var(--btn-size) !important;
+    min-width: var(--btn-size) !important;
+    height: var(--btn-size) !important;
+    max-height: var(--btn-size) !important;
     box-sizing: border-box !important;
 }
 #txt2img_ratio select:focus,
 #img2img_ratio select:focus,
 #txt2img_presets_btn:focus {
-  outline: none;
-  box-shadow: none;
+    outline: none;
+    box-shadow: none;
 }
 
 /* Button Styles */
@@ -31,13 +36,14 @@
 #img2img_ratio select {
     appearance: none;
     box-sizing: border-box;
-    padding: 10px 4px;
+    padding: 0;
     font-size: 14px;
-    line-height: 1.1;
+    line-height: var(--btn-size);
     text-align: center;
+    text-align-last: center;
     color: var(--block-label-text-color);
-    background-image: none;
     background: var(--background-fill-primary);
+    background-image: none;
     border: 1px solid var(--block-border-color);
     border-radius: 8px;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);

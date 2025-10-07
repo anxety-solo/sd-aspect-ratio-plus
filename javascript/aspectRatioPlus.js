@@ -30,15 +30,9 @@ const aspectRatioFromStr = (ar) => ar.includes(':') && ar.split(':').map(Number)
 const reverseAspectRatio = (ar) => ar.includes(':') && ar.split(':').reverse().join(':');
 
 const clampToBoundaries = (w, h) => {
-    const ratio = w / h;
     w = Math.min(Math.max(w, _MIN), _MAX);
     h = Math.min(Math.max(h, _MIN), _MAX);
-    if (w / h > ratio) h = Math.round(w / ratio);
-    else if (w / h < ratio) w = Math.round(h * ratio);
-    return [
-        Math.min(Math.max(w, _MIN), _MAX),
-        Math.min(Math.max(h, _MIN), _MAX)
-    ];
+    return [w, h];
 };
 
 const getOptions = () =>
@@ -394,8 +388,6 @@ class OptionPickingController {
         }
 
         if (picked === _LOCK) {
-            // Update limits after swap
-            this.ctrl.updateLimits();
             // Trigger events to update UI
             const ev = new Event('input', { bubbles: true });
             this.ctrl.w.trigger(ev);
@@ -407,10 +399,8 @@ class OptionPickingController {
         const parsed = aspectRatioFromStr(picked);
         if (parsed) {
             const [wR, hR] = parsed;
-            const [cwR, chR] = clampToBoundaries(wR, hR);
-            this.ctrl.widthRatio = cwR;
-            this.ctrl.heightRatio = chR;
-            this.ctrl.updateLimits();
+            this.ctrl.widthRatio = wR;
+            this.ctrl.heightRatio = hR;
             // Trigger events to update UI
             const ev = new Event('input', { bubbles: true });
             this.ctrl.w.trigger(ev);
@@ -433,22 +423,17 @@ class AspectRatioController {
         this.h = new SliderController(hEl);
         this.inputs = [...this.w.inputs, ...this.h.inputs];
 
+        // Set fixed limits
+        this.w.update('min', _MIN);
+        this.w.update('max', _MAX);
+        this.h.update('min', _MIN);
+        this.h.update('max', _MAX);
+
         // React to manual input changes
         this.inputs.forEach((inp) => inp.addEventListener('change', (e) => this.maintainAspectRatio(e.target)));
 
         this.optionCtrl = new OptionPickingController(page, defaults, this);
         this.setAspectRatio(_OFF);
-    }
-
-    disable() {
-        this.w.update('min', _MIN);
-        this.w.update('max', _MAX);
-        this.h.update('min', _MIN);
-        this.h.update('max', _MAX);
-    }
-
-    isLandscape() {
-        return this.widthRatio >= this.heightRatio;
     }
 
     setAspectRatio(ar) {
@@ -457,7 +442,6 @@ class AspectRatioController {
         if (ar === _OFF) {
             this.widthRatio = null;
             this.heightRatio = null;
-            this.disable();
             return;
         }
 
@@ -472,28 +456,9 @@ class AspectRatioController {
             [wR, hR] = aspectRatioFromStr(ar);
         }
 
-        [this.widthRatio, this.heightRatio] = clampToBoundaries(wR, hR);
-        this.updateLimits();
+        this.widthRatio = wR;
+        this.heightRatio = hR;
         this.maintainAspectRatio();
-    }
-
-    updateLimits() {
-        const landscape = this.isLandscape();
-        const AR = landscape
-            ? this.widthRatio / this.heightRatio
-            : this.heightRatio / this.widthRatio;
-
-        if (landscape) {
-            this.w.update('min', _MIN * AR);
-            this.h.update('min', _MIN);
-            this.h.update('max', _MAX / AR);
-            this.w.update('max', _MAX);
-        } else {
-            this.h.update('min', _MIN * AR);
-            this.w.update('min', _MIN);
-            this.w.update('max', _MAX / AR);
-            this.h.update('max', _MAX);
-        }
     }
 
     maintainAspectRatio(changed) {
@@ -503,9 +468,17 @@ class AspectRatioController {
         let w, h;
 
         if (!changed) {
-            const maxVal = Math.max(...this.inputs.map((x) => +x.value));
-            if (this.isLandscape()) [w, h] = [maxVal, maxVal / aspect];
-            else [h, w] = [maxVal, maxVal * aspect];
+            // Initial calculation: use current max value
+            const maxVal = Math.max(this.w.val(), this.h.val());
+            if (aspect >= 1) {
+                // Landscape or square
+                w = maxVal;
+                h = w / aspect;
+            } else {
+                // Portrait
+                h = maxVal;
+                w = h * aspect;
+            }
         } else if (changed.isWidth) {
             w = +changed.value;
             h = w / aspect;
