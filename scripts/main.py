@@ -8,6 +8,7 @@ EXTENSION_NAME = 'Aspect Ratio+'
 # Settings keys
 ARP_ASPECT_RATIO_SHOW_KEY = 'arp_aspect_ratio_show'
 ARP_ASPECT_RATIOS_KEY = 'arp_aspect_ratio'
+ARP_ASPECT_RATIO_LIMIT_KEY = 'arp_aspect_ratio_limit'
 ARP_PRESETS_SHOW_KEY = 'arp_presets_show'
 ARP_PRESETS_KEY = 'arp_presets'
 ARP_PRESETS_COLUMNS_KEY = 'arp_presets_columns'
@@ -31,6 +32,7 @@ DEFAULT_PRESETS = '''> Portrait
 DEFAULT_VALUES = {
     ARP_ASPECT_RATIO_SHOW_KEY: True,
     ARP_ASPECT_RATIOS_KEY: '1:1, 2:3, 3:4, 4:5, 9:16',
+    ARP_ASPECT_RATIO_LIMIT_KEY: True,
     ARP_PRESETS_SHOW_KEY: True,
     ARP_PRESETS_KEY: DEFAULT_PRESETS,
     ARP_PRESETS_COLUMNS_KEY: 2,
@@ -62,6 +64,16 @@ def on_settings():
             component=gr.Textbox,
             section=SECTION
         ).info('Comma-separated list of aspect ratios to show in the dropdown')
+    )
+
+    opts.add_option(
+        ARP_ASPECT_RATIO_LIMIT_KEY,
+        OptionInfo(
+            default=DEFAULT_VALUES[ARP_ASPECT_RATIO_LIMIT_KEY],
+            label='Enforce Aspect Ratio Limits',
+            component=gr.Checkbox,
+            section=SECTION
+        ).info('If enabled, the width/height sliders will respect the selected aspect ratio limits')
     )
 
     # Presets options

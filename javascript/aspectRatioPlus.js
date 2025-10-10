@@ -483,14 +483,15 @@ class AspectRatioController {
         } else {
             const isW = changed.isWidth;
             const value = +changed.value;
-            const maxVal = getMaxAllowedValue(aspect, isW);
+
+            // Apply limit only if option enabled
+            const applyLimit = window.opts?.arp_aspect_ratio_limit ?? true;
+            const maxVal = applyLimit ? getMaxAllowedValue(aspect, isW) : _MAX;
 
             if (isW) {
-                // Check if width exceeds allowed maximum for this aspect ratio
                 w = Math.min(value, maxVal);
                 h = w / aspect;
             } else {
-                // Check if height exceeds allowed maximum for this aspect ratio
                 h = Math.min(value, maxVal);
                 w = h * aspect;
             }
