@@ -29,6 +29,13 @@ const round8 = (n) => Math.round(Number(n) / 8) * 8;
 const aspectRatioFromStr = (ar) => ar.includes(':') && ar.split(':').map(Number);
 const reverseAspectRatio = (ar) => ar.includes(':') && ar.split(':').reverse().join(':');
 
+const getMaxAllowedValue = (aspectRatio, isWidth) => {
+    if (!aspectRatio || aspectRatio === _OFF) return _MAX;
+    const aspect = aspectRatio;
+    const ratio = isWidth ? aspect : 1 / aspect;
+    return Math.min(_MAX, _MAX * ratio);
+};
+
 const clampToBoundaries = (w, h) => {
     w = Math.min(Math.max(w, _MIN), _MAX);
     h = Math.min(Math.max(h, _MIN), _MAX);
@@ -423,7 +430,7 @@ class AspectRatioController {
         this.h = new SliderController(hEl);
         this.inputs = [...this.w.inputs, ...this.h.inputs];
 
-        // Set fixed limits
+        // Set fixed limits - never change these
         this.w.update('min', _MIN);
         this.w.update('max', _MAX);
         this.h.update('min', _MIN);
@@ -465,26 +472,28 @@ class AspectRatioController {
         if (this.aspectRatio === _OFF) return;
 
         const aspect = this.widthRatio / this.heightRatio;
-        let w, h;
+        let w = this.w.val(), h = this.h.val();
 
         if (!changed) {
             // Initial calculation: use current max value
-            const maxVal = Math.max(this.w.val(), this.h.val());
-            if (aspect >= 1) {
-                // Landscape or square
-                w = maxVal;
+            const maxVal = Math.max(w, h);
+            [w, h] = aspect >= 1
+                ? [maxVal, maxVal / aspect]   // Landscape or square
+                : [maxVal * aspect, maxVal];  // Portrait
+        } else {
+            const isW = changed.isWidth;
+            const value = +changed.value;
+            const maxVal = getMaxAllowedValue(aspect, isW);
+
+            if (isW) {
+                // Check if width exceeds allowed maximum for this aspect ratio
+                w = Math.min(value, maxVal);
                 h = w / aspect;
             } else {
-                // Portrait
-                h = maxVal;
+                // Check if height exceeds allowed maximum for this aspect ratio
+                h = Math.min(value, maxVal);
                 w = h * aspect;
             }
-        } else if (changed.isWidth) {
-            w = +changed.value;
-            h = w / aspect;
-        } else {
-            h = +changed.value;
-            w = h * aspect;
         }
 
         const [W, H] = clampToBoundaries(w, h);
@@ -495,11 +504,11 @@ class AspectRatioController {
         this.h.trigger(ev);
 
         // Call dimensionChange for each input (if it exists)
-        [...this.w.inputs, ...this.h.inputs].forEach((inp) => {
-            if (typeof dimensionChange !== 'undefined') {
-                dimensionChange({ target: inp }, inp.isWidth, !inp.isWidth);
-            }
-        });
+        if (typeof dimensionChange === 'function') {
+            [...this.w.inputs, ...this.h.inputs].forEach(inp =>
+                dimensionChange({ target: inp }, inp.isWidth, !inp.isWidth)
+            );
+        }
     }
 
     static observeStartup(key, page, defaults, post = () => {}) {
