@@ -107,7 +107,10 @@ class PresetsPopupController {
         this.popup.className = 'arp-presets-popup';
         this.popup.style.opacity = '0';
         this.popup.style.pointerEvents = 'none';
-        document.body.appendChild(this.popup);
+
+        // attach relative to the same parent as button
+        const parent = buttonElement.offsetParent || document.body;
+        parent.appendChild(this.popup);
 
         // Header
         const header = document.createElement('div');
@@ -156,7 +159,7 @@ class PresetsPopupController {
                 label.className = 'arp-presets-section-label';
                 label.textContent = section.label;
                 sectionDiv.appendChild(label);
-            }
+            };
 
             const grid = document.createElement('div');
             grid.className = 'arp-presets-grid';
@@ -196,19 +199,20 @@ class PresetsPopupController {
 
     positionPopup(buttonElement) {
         const rect = buttonElement.getBoundingClientRect();
+        const parentRect = (buttonElement.offsetParent || document.body).getBoundingClientRect();
+        const popupRect = this.popup.getBoundingClientRect();
+
+        // Calculate offset inside parent
+        let left = rect.right - parentRect.left + 8;
+        let top = rect.top - parentRect.top;
+
         const vw = window.innerWidth;
         const vh = window.innerHeight;
+        const pw = popupRect.width;
+        const ph = popupRect.height;
 
-        const { width: pw, height: ph } = this.popup.getBoundingClientRect();
-
-        let left = rect.right + 8;
-        let top = rect.top;
-
-        if (left + pw > vw - 8) left = rect.left - pw - 8;
-        left = Math.max(8, Math.min(left, vw - pw - 8));
-
-        if (top + ph > vh - 8) top = rect.top - ph - 8;
-        top = Math.max(8, Math.min(top, vh - ph - 8));
+        if (rect.right + pw > vw - 8) left = rect.left - parentRect.left - pw - 8;
+        if (rect.top + ph > vh - 8) top = rect.top - parentRect.top - ph - 8;
 
         Object.assign(this.popup.style, {
             left: `${Math.round(left)}px`,

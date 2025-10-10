@@ -78,7 +78,7 @@
 
 /* Popup Container */
 .arp-presets-popup {
-    position: fixed;
+    position: absolute;
     box-sizing: border-box;
     max-width: 400px;
     min-width: 240px;
