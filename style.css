@@ -11,7 +11,7 @@
     gap: 6px !important;
 }
 
-/* Shit Style :3 */
+/* Button Base Styles */
 #txt2img_ratio select,
 #img2img_ratio select,
 #txt2img_presets_btn,
@@ -31,11 +31,10 @@
     box-shadow: none;
 }
 
-/* Button Styles */
+/* Ratio Select Styles */
 #txt2img_ratio select,
 #img2img_ratio select {
     appearance: none;
-    box-sizing: border-box;
     padding: 0;
     font-size: 14px;
     line-height: var(--btn-size);
@@ -54,12 +53,11 @@
     background: var(--background-fill-secondary);
 }
 
-/* Presets button */
+/* Presets Button */
 #txt2img_presets_btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-sizing: border-box;
     padding: 4px;
     width: 100%;
     background: var(--background-fill-primary);
@@ -79,9 +77,8 @@
 /* Popup Container */
 .arp-presets-popup {
     position: absolute;
-    box-sizing: border-box;
-    max-width: 400px;
-    min-width: 240px;
+    min-width: 240px !important;
+    width: max-content !important;
     background: var(--body-background-fill);
     border: 1px solid var(--border-color-primary);
     border-radius: 8px;
@@ -122,29 +119,26 @@
     justify-content: center;
     width: 24px;
     height: 24px;
-    padding: 4px;
+    padding: 0;
     color: var(--body-text-color-subdued);
     background: transparent;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
-.arp-presets-close {
-    font-size: 20px;
-    line-height: 1;
+.arp-presets-close svg,
+.arp-presets-settings svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
 }
 
 .arp-presets-close:hover,
 .arp-presets-settings:hover {
     color: var(--body-text-color);
     background: var(--button-secondary-background-fill-hover);
-}
-
-.arp-presets-settings svg {
-    width: 16px;
-    height: 16px;
-    fill: currentColor;
 }
 
 /* Popup Content */
@@ -175,23 +169,19 @@
 .arp-presets-grid {
     display: grid;
     gap: 6px;
-    grid-auto-flow: row dense;
 }
 
 /* Preset Button */
 .arp-preset-btn {
-    flex: 1 1 auto;
+    padding: 4px 8px !important;
     color: var(--body-text-color);
-    font-size: 12px;
+    font-size: 14px !important;
     text-align: center;
-    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
     background: var(--input-background-fill);
     border: 1px solid var(--input-border-color);
     border-radius: 4px;
-    padding: 8px 4px;
-    white-space: normal;
-    overflow: hidden;
-    line-height: 1;
     cursor: pointer;
 }
 .arp-preset-btn:hover {

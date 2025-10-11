@@ -55,8 +55,6 @@ const reverseAllOptions = () => {
     });
 };
 
-// ====== Presets Parser & Popup Controller ======
-
 const parsePresets = (presetsText) => {
     const autoLabel = !!window.opts?.arp_presets_autolabel;
     const lines = presetsText
@@ -87,10 +85,78 @@ const parsePresets = (presetsText) => {
     return sections;
 };
 
-class PresetsPopupController {
-    constructor(page, ctrl) {
+// ====== Slider Controller ======
+class SliderController {
+    constructor(el) {
+        this.inputs = [...el.querySelectorAll('input')];
+        this.inputs.forEach((i) => (i.isWidth = el.isWidth));
+        this.num = this.inputs.find((i) => i.type === 'number');
+    }
+
+    val() { return Number(this.num.value); }
+    update(prop, v) { this.inputs.forEach((i) => (i[prop] = round8(v))); }
+    setVal(v) { this.update('value', v); }
+    trigger(e) { this.num.dispatchEvent(e); }
+}
+
+// ====== Ratio Select Controller ======
+class RatioSelectController {
+    constructor(page, defaultOptions, aspectRatioCtrl) {
         this.page = page;
-        this.ctrl = ctrl;
+        this.aspectRatioCtrl = aspectRatioCtrl;
+        this.options = [...new Set([...defaultOptions, ...getOptions()])];
+        this.element = null;
+        this.select = null;
+    }
+
+    createSelect() {
+        const box = document.createElement('div');
+        box.id = `${this.page}_ratio`;
+
+        const select = document.createElement('select');
+        select.id = `${this.page}_select_aspect_ratio`;
+        select.title = 'Aspect Ratio';
+        select.innerHTML = this.options.map((r) => `<option class="ar-option">${r}</option>`).join('');
+
+        select.addEventListener('change', () => this.handleRatioChange());
+
+        box.appendChild(select);
+        this.element = box;
+        this.select = select;
+        return box;
+    }
+
+    handleRatioChange() {
+        const picked = this.current();
+        if (picked !== _IMAGE && this.aspectRatioCtrl.swapBtnCtrl) {
+            this.aspectRatioCtrl.swapBtnCtrl.enable();
+        }
+        this.aspectRatioCtrl.setAspectRatio(picked);
+    }
+
+    current() {
+        return this.select?.value || _OFF;
+    }
+
+    setRatio(value) {
+        if (this.select) {
+            this.select.value = value;
+            this.aspectRatioCtrl.setAspectRatio(value);
+            this.aspectRatioCtrl.widthRatio = null;
+            this.aspectRatioCtrl.heightRatio = null;
+        }
+    }
+
+    getElement() {
+        return this.element;
+    }
+}
+
+// ====== Presets Popup Controller ======
+class PresetsPopupController {
+    constructor(page, aspectRatioCtrl) {
+        this.page = page;
+        this.aspectRatioCtrl = aspectRatioCtrl;
         this.popup = null;
     }
 
@@ -108,7 +174,6 @@ class PresetsPopupController {
         this.popup.style.opacity = '0';
         this.popup.style.pointerEvents = 'none';
 
-        // attach relative to the same parent as button
         const parent = buttonElement.offsetParent || document.body;
         parent.appendChild(this.popup);
 
@@ -132,7 +197,7 @@ class PresetsPopupController {
 
         const closeBtn = document.createElement('button');
         closeBtn.className = 'arp-presets-close';
-        closeBtn.innerHTML = '×';
+        closeBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`;
         closeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.close();
@@ -147,7 +212,6 @@ class PresetsPopupController {
         const content = document.createElement('div');
         content.className = 'arp-presets-content';
 
-        // Build sections
         presets.forEach((section) => {
             if (!section.presets || section.presets.length === 0) return;
 
@@ -184,13 +248,11 @@ class PresetsPopupController {
         this.popup.appendChild(header);
         this.popup.appendChild(content);
 
-        // Position popup with respect to viewport and button
         this.positionPopup(buttonElement);
 
         this.popup.style.opacity = '1';
         this.popup.style.pointerEvents = 'auto';
 
-        // Event listeners
         setTimeout(() => {
             document.addEventListener('click', this.outsideClickHandler);
             document.addEventListener('keydown', this.escKeyHandler);
@@ -202,7 +264,6 @@ class PresetsPopupController {
         const parentRect = (buttonElement.offsetParent || document.body).getBoundingClientRect();
         const popupRect = this.popup.getBoundingClientRect();
 
-        // Calculate offset inside parent
         let left = rect.right - parentRect.left + 8;
         let top = rect.top - parentRect.top;
 
@@ -230,7 +291,7 @@ class PresetsPopupController {
     }
 
     outsideClickHandler = (e) => {
-        if (this.popup && !this.popup.contains(e.target) && !e.target.closest('#txt2img_presets_btn')) {
+        if (this.popup && !this.popup.contains(e.target) && !e.target.closest(`#${this.page}_presets_btn`)) {
             this.close();
         }
     };
@@ -242,25 +303,19 @@ class PresetsPopupController {
     };
 
     applyPreset(width, height) {
-        // Set ratio select to OFF
-        if (this.ctrl.optionCtrl?.ratioSelect) {
-            this.ctrl.optionCtrl.ratioSelect.value = _OFF;
-            this.ctrl.setAspectRatio(_OFF);
-            this.ctrl.widthRatio = null;
-            this.ctrl.heightRatio = null;
+        if (this.aspectRatioCtrl.ratioSelectCtrl) {
+            this.aspectRatioCtrl.ratioSelectCtrl.setRatio(_OFF);
         }
 
-        // Apply dimensions
-        this.ctrl.w.setVal(width);
-        this.ctrl.h.setVal(height);
+        this.aspectRatioCtrl.w.setVal(width);
+        this.aspectRatioCtrl.h.setVal(height);
 
         const ev = new Event('input', { bubbles: true });
-        this.ctrl.w.trigger(ev);
-        this.ctrl.h.trigger(ev);
+        this.aspectRatioCtrl.w.trigger(ev);
+        this.aspectRatioCtrl.h.trigger(ev);
     }
 
     openSettings() {
-        // open settings tab and Aspect Ratio+ section
         const settingsTab = Array.from(gradioApp().querySelectorAll('#tabs > .tab-nav button'))
             .find((button) => button.textContent.trim() === 'Settings');
 
@@ -279,148 +334,156 @@ class PresetsPopupController {
     }
 }
 
-// ====== Slider Controller ======
-class SliderController {
-    constructor(el) {
-        this.inputs = [...el.querySelectorAll('input')];
-        this.inputs.forEach((i) => (i.isWidth = el.isWidth));
-        this.num = this.inputs.find((i) => i.type === 'number');
+// ====== Presets Button Controller ======
+class PresetsButtonController {
+    constructor(page, aspectRatioCtrl) {
+        this.page = page;
+        this.aspectRatioCtrl = aspectRatioCtrl;
+        this.element = null;
+        this.popupCtrl = null;
     }
 
-    val() { return Number(this.num.value); }
-    update(prop, v) { this.inputs.forEach((i) => (i[prop] = round8(v))); }
-    setVal(v) { this.update('value', v); }
-    trigger(e) { this.num.dispatchEvent(e); }
+    createButton() {
+        const box = document.createElement('div');
+        box.id = `${this.page}_presets_box`;
+
+        const btn = document.createElement('button');
+        btn.id = `${this.page}_presets_btn`;
+        btn.innerHTML = `
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="3" width="8" height="8" rx="1"/>
+                <rect x="13" y="3" width="8" height="8" rx="1"/>
+                <rect x="3" y="13" width="8" height="8" rx="1"/>
+                <rect x="13" y="13" width="8" height="8" rx="1"/>
+            </svg>
+        `;
+        btn.title = 'Dimension Presets';
+
+        this.popupCtrl = new PresetsPopupController(this.page, this.aspectRatioCtrl);
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.popupCtrl.show(btn);
+        });
+
+        box.appendChild(btn);
+        this.element = box;
+        return box;
+    }
+
+    getElement() {
+        return this.element;
+    }
 }
 
-// ====== Option Picking Controller ======
-class OptionPickingController {
-    constructor(page, defaultOptions, ctrl) {
+// ====== Swap Button Controller ======
+class SwapButtonController {
+    constructor(page, aspectRatioCtrl) {
         this.page = page;
-        this.ctrl = ctrl;
-        this.options = [...new Set([...defaultOptions, ...getOptions()])];
-        this.buildUI();
+        this.aspectRatioCtrl = aspectRatioCtrl;
+        this.element = null;
     }
 
-    // === Build UI structure ===
-    buildUI() {
+    createButton() {
         const originalSwapBtn = gradioApp().getElementById(`${this.page}_res_switch_btn`);
+        const btn = originalSwapBtn.cloneNode(true);
+        btn.id = `${this.page}_res_switch_btn`;
 
-        // Wrapper container
-        const wrap = document.createElement('div');
-        wrap.id = `${this.page}_size_toolbox`;
+        btn.addEventListener('click', () => this.handleSwapClick());
 
-        // Clone the original swap button
-        const swapBtn = originalSwapBtn.cloneNode(true);
-        swapBtn.id = `${this.page}_res_switch_btn`;
-
-        // Aspect ratio select box
-        const ratioBox = document.createElement('div');
-        ratioBox.id = `${this.page}_ratio`;
-
-        const select = document.createElement('select');
-        select.id = `${this.page}_select_aspect_ratio`;
-        select.title = 'Aspect Ratio';
-        select.innerHTML = this.options.map((r) => `<option class="ar-option">${r}</option>`).join('');
-        ratioBox.appendChild(select);
-
-        // Append select box first
-        wrap.appendChild(ratioBox);
-
-        // Add presets button for txt2img only (between ratio select and swap button)
-        if (this.page === 'txt2img' && window.opts?.arp_presets_show) {
-            // Box for presets button
-            const presetsBox = document.createElement('div');
-            presetsBox.id = `${this.page}_presets_box`;
-
-            const presetsBtn = document.createElement('button');
-            presetsBtn.id = `${this.page}_presets_btn`;
-            presetsBtn.innerHTML = `
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="3" width="8" height="8" rx="1"/>
-                    <rect x="13" y="3" width="8" height="8" rx="1"/>
-                    <rect x="3" y="13" width="8" height="8" rx="1"/>
-                    <rect x="13" y="13" width="8" height="8" rx="1"/>
-                </svg>
-            `;
-            presetsBtn.title = 'Dimension Presets';
-
-            const popupCtrl = new PresetsPopupController(this.page, this.ctrl);
-            presetsBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                popupCtrl.show(presetsBtn);
-            });
-
-            presetsBox.appendChild(presetsBtn);
-            wrap.appendChild(presetsBox);
-        }
-
-        // Then append swap button
-        wrap.appendChild(swapBtn);
-
-        // Replace original button with wrapper
-        originalSwapBtn.replaceWith(wrap);
-
-        // Save references
-        this.swapBtn = swapBtn;
-        this.ratioSelect = select;
-
-        // Event listeners
-        this.ratioSelect.addEventListener('change', () => this.handleRatioChange());
-        this.swapBtn.addEventListener('click', () => this.handleSwapClick());
-    }
-
-    handleRatioChange() {
-        const picked = this.current();
-        if (picked !== _IMAGE) this.swapBtn.removeAttribute('disabled');
-        this.ctrl.setAspectRatio(picked);
+        this.element = btn;
+        return btn;
     }
 
     handleSwapClick() {
-        // Swap width and height values directly
-        const curW = this.ctrl.w.val();
-        const curH = this.ctrl.h.val();
-        this.ctrl.w.setVal(curH);
-        this.ctrl.h.setVal(curW);
+        const curW = this.aspectRatioCtrl.w.val();
+        const curH = this.aspectRatioCtrl.h.val();
+        this.aspectRatioCtrl.w.setVal(curH);
+        this.aspectRatioCtrl.h.setVal(curW);
 
-        // Swap internal ratio values
-        [this.ctrl.widthRatio, this.ctrl.heightRatio] = [this.ctrl.heightRatio, this.ctrl.widthRatio];
+        [this.aspectRatioCtrl.widthRatio, this.aspectRatioCtrl.heightRatio] =
+            [this.aspectRatioCtrl.heightRatio, this.aspectRatioCtrl.widthRatio];
 
-        // Reverse all AR options visually
         reverseAllOptions();
 
-        const picked = this.current();
-        if (picked === _OFF) {
-            // Trigger events to update UI
+        const picked = this.aspectRatioCtrl.ratioSelectCtrl?.current() || _OFF;
+
+        if (picked === _OFF || picked === _LOCK) {
             const ev = new Event('input', { bubbles: true });
-            this.ctrl.w.trigger(ev);
-            this.ctrl.h.trigger(ev);
+            this.aspectRatioCtrl.w.trigger(ev);
+            this.aspectRatioCtrl.h.trigger(ev);
             return;
         }
 
-        if (picked === _LOCK) {
-            // Trigger events to update UI
-            const ev = new Event('input', { bubbles: true });
-            this.ctrl.w.trigger(ev);
-            this.ctrl.h.trigger(ev);
-            return;
-        }
-
-        // For aspect ratio strings (e.g., "16:9")
         const parsed = aspectRatioFromStr(picked);
         if (parsed) {
             const [wR, hR] = parsed;
-            this.ctrl.widthRatio = wR;
-            this.ctrl.heightRatio = hR;
-            // Trigger events to update UI
+            this.aspectRatioCtrl.widthRatio = wR;
+            this.aspectRatioCtrl.heightRatio = hR;
             const ev = new Event('input', { bubbles: true });
-            this.ctrl.w.trigger(ev);
-            this.ctrl.h.trigger(ev);
+            this.aspectRatioCtrl.w.trigger(ev);
+            this.aspectRatioCtrl.h.trigger(ev);
         }
     }
 
-    current() {
-        return this.ratioSelect.value;
+    enable() {
+        if (this.element) {
+            this.element.removeAttribute('disabled');
+        }
+    }
+
+    disable() {
+        if (this.element) {
+            this.element.setAttribute('disabled', 'true');
+        }
+    }
+
+    getElement() {
+        return this.element;
+    }
+}
+
+// ====== Toolbox Controller ======
+class ToolboxController {
+    constructor(page, aspectRatioCtrl) {
+        this.page = page;
+        this.aspectRatioCtrl = aspectRatioCtrl;
+        this.wrapper = null;
+        this.ratioSelectCtrl = null;
+        this.presetsButtonCtrl = null;
+        this.swapBtnCtrl = null;
+    }
+
+    build(defaultOptions) {
+        const originalSwapBtn = gradioApp().getElementById(`${this.page}_res_switch_btn`);
+
+        this.wrapper = document.createElement('div');
+        this.wrapper.id = `${this.page}_size_toolbox`;
+
+        // 1. Ratio Select (if enabled)
+        if (window.opts?.arp_aspect_ratio_show) {
+            this.ratioSelectCtrl = new RatioSelectController(this.page, defaultOptions, this.aspectRatioCtrl);
+            this.wrapper.appendChild(this.ratioSelectCtrl.createSelect());
+            this.aspectRatioCtrl.ratioSelectCtrl = this.ratioSelectCtrl;
+        }
+
+        // 2. Presets Button (only for txt2img and if enabled)
+        if (this.page === 'txt2img' && window.opts?.arp_presets_show) {
+            this.presetsButtonCtrl = new PresetsButtonController(this.page, this.aspectRatioCtrl);
+            this.wrapper.appendChild(this.presetsButtonCtrl.createButton());
+        }
+
+        // 3. Swap Button (always)
+        this.swapBtnCtrl = new SwapButtonController(this.page, this.aspectRatioCtrl);
+        this.wrapper.appendChild(this.swapBtnCtrl.createButton());
+        this.aspectRatioCtrl.swapBtnCtrl = this.swapBtnCtrl;
+
+        originalSwapBtn.replaceWith(this.wrapper);
+
+        return this.wrapper;
+    }
+
+    getWrapper() {
+        return this.wrapper;
     }
 }
 
@@ -430,20 +493,24 @@ class AspectRatioController {
         wEl.isWidth = true;
         hEl.isWidth = false;
 
+        this.page = page;
         this.w = new SliderController(wEl);
         this.h = new SliderController(hEl);
         this.inputs = [...this.w.inputs, ...this.h.inputs];
 
-        // Set fixed limits - never change these
         this.w.update('min', _MIN);
         this.w.update('max', _MAX);
         this.h.update('min', _MIN);
         this.h.update('max', _MAX);
 
-        // React to manual input changes
         this.inputs.forEach((inp) => inp.addEventListener('change', (e) => this.maintainAspectRatio(e.target)));
 
-        this.optionCtrl = new OptionPickingController(page, defaults, this);
+        this.toolboxCtrl = new ToolboxController(page, this);
+        this.toolboxCtrl.build(defaults);
+
+        this.ratioSelectCtrl = this.toolboxCtrl.ratioSelectCtrl;
+        this.swapBtnCtrl = this.toolboxCtrl.swapBtnCtrl;
+
         this.setAspectRatio(_OFF);
     }
 
@@ -479,16 +546,14 @@ class AspectRatioController {
         let w = this.w.val(), h = this.h.val();
 
         if (!changed) {
-            // Initial calculation: use current max value
             const maxVal = Math.max(w, h);
             [w, h] = aspect >= 1
-                ? [maxVal, maxVal / aspect]   // Landscape or square
-                : [maxVal * aspect, maxVal];  // Portrait
+                ? [maxVal, maxVal / aspect]
+                : [maxVal * aspect, maxVal];
         } else {
             const isW = changed.isWidth;
             const value = +changed.value;
 
-            // Apply limit only if option enabled
             const applyLimit = window.opts?.arp_aspect_ratio_limit ?? true;
             const maxVal = applyLimit ? getMaxAllowedValue(aspect, isW) : _MAX;
 
@@ -508,7 +573,6 @@ class AspectRatioController {
         this.h.setVal(H);
         this.h.trigger(ev);
 
-        // Call dimensionChange for each input (if it exists)
         if (typeof dimensionChange === 'function') {
             [...this.w.inputs, ...this.h.inputs].forEach(inp =>
                 dimensionChange({ target: inp }, inp.isWidth, !inp.isWidth)
@@ -523,7 +587,6 @@ class AspectRatioController {
 
             if (wEl && hEl && window.opts?.arp_aspect_ratio_show !== undefined) {
                 obs.disconnect();
-                if (!window.opts.arp_aspect_ratio_show) return;
 
                 const c = new AspectRatioController(page, wEl, hEl, defaults);
                 post(c);
@@ -541,7 +604,7 @@ const addImg2ImgTabSwitchClickListeners = (ctrl) => {
         .querySelectorAll('#img2img_settings button:not(.selected):not(.hasTabSwitchListener)')
         .forEach((btn) => {
             btn.addEventListener('click', () => {
-                if (ctrl.optionCtrl.current() === _IMAGE) ctrl.setAspectRatio(_IMAGE);
+                if (ctrl.ratioSelectCtrl?.current() === _IMAGE) ctrl.setAspectRatio(_IMAGE);
                 addImg2ImgTabSwitchClickListeners(ctrl);
             });
             btn.classList.add('hasTabSwitchListener');
@@ -550,7 +613,7 @@ const addImg2ImgTabSwitchClickListeners = (ctrl) => {
 
 const postImageControllerSetupFunction = (ctrl) => {
     const scale = (e) => {
-        if (ctrl.optionCtrl.current() !== _IMAGE) return;
+        if (ctrl.ratioSelectCtrl?.current() !== _IMAGE) return;
         const file = (e.dataTransfer || e.target).files[0];
         const img = new Image();
         img.src = URL.createObjectURL(file);
