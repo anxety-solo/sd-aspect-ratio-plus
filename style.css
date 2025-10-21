@@ -199,7 +199,7 @@
 }
 .arp-presets-content::-webkit-scrollbar-thumb {
     background: var(--border-color-primary);
-    border-radius: 3px;
+    /* border-radius: 3px; */
 }
 .arp-presets-content::-webkit-scrollbar-thumb:hover {
     background: var(--body-text-color-subdued);

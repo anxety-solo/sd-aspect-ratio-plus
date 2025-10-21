@@ -43,7 +43,7 @@ const clampToBoundaries = (w, h) => {
 };
 
 const getOptions = () =>
-    window.opts.arp_aspect_ratio.split(',').map((o) => o.trim());
+    opts.arp_aspect_ratio.split(',').map((o) => o.trim());
 
 const reverseAllOptions = () => {
     document.querySelectorAll('.ar-option').forEach((el) => {
@@ -56,7 +56,7 @@ const reverseAllOptions = () => {
 };
 
 const parsePresets = (presetsText) => {
-    const autoLabel = !!window.opts?.arp_presets_autolabel;
+    const autoLabel = !!opts?.arp_presets_autolabel;
     const lines = presetsText
         .split('\n')
         .map((l) => l.trim())
@@ -166,8 +166,8 @@ class PresetsPopupController {
             return;
         }
 
-        const presets = parsePresets(window.opts.arp_presets || '');
-        const columns = Math.min(Math.max(1, Number(window.opts?.arp_presets_columns || 2)), 4);
+        const presets = parsePresets(opts.arp_presets || '');
+        const columns = Math.min(Math.max(1, Number(opts?.arp_presets_columns || 2)), 4);
 
         this.popup = document.createElement('div');
         this.popup.className = 'arp-presets-popup';
@@ -460,14 +460,14 @@ class ToolboxController {
         this.wrapper.id = `${this.page}_size_toolbox`;
 
         // 1. Ratio Select (if enabled)
-        if (window.opts?.arp_aspect_ratio_show) {
+        if (opts?.arp_aspect_ratio_show) {
             this.ratioSelectCtrl = new RatioSelectController(this.page, defaultOptions, this.aspectRatioCtrl);
             this.wrapper.appendChild(this.ratioSelectCtrl.createSelect());
             this.aspectRatioCtrl.ratioSelectCtrl = this.ratioSelectCtrl;
         }
 
         // 2. Presets Button (only for txt2img and if enabled)
-        if (this.page === 'txt2img' && window.opts?.arp_presets_show) {
+        if (this.page === 'txt2img' && opts?.arp_presets_show) {
             this.presetsButtonCtrl = new PresetsButtonController(this.page, this.aspectRatioCtrl);
             this.wrapper.appendChild(this.presetsButtonCtrl.createButton());
         }
@@ -554,7 +554,7 @@ class AspectRatioController {
             const isW = changed.isWidth;
             const value = +changed.value;
 
-            const applyLimit = window.opts?.arp_aspect_ratio_limit ?? true;
+            const applyLimit = opts?.arp_aspect_ratio_limit ?? true;
             const maxVal = applyLimit ? getMaxAllowedValue(aspect, isW) : _MAX;
 
             if (isW) {
@@ -585,7 +585,7 @@ class AspectRatioController {
             const wEl = gradioApp().querySelector(`#${page}_width`);
             const hEl = gradioApp().querySelector(`#${page}_height`);
 
-            if (wEl && hEl && window.opts?.arp_aspect_ratio_show !== undefined) {
+            if (wEl && hEl && opts?.arp_aspect_ratio_show !== undefined) {
                 obs.disconnect();
 
                 const c = new AspectRatioController(page, wEl, hEl, defaults);
