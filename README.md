@@ -14,9 +14,9 @@ A simple extension for Stable Diffusion WebUI that provides intelligent aspect r
 
 ### 🎯 Aspect Ratio Controls
 
-**Smart Dropdown Selection**
+**Dropdown Selection**
 - Adds a customizable aspect ratio dropdown that automatically scales dimensions while maintaining proportions
-- Works seamlessly with both txt2img and img2img tabs
+- Works with both txt2img and img2img tabs
 - Updates in real-time as you adjust width or height sliders
 
 **Available Modes:**
@@ -31,9 +31,9 @@ A simple extension for Stable Diffusion WebUI that provides intelligent aspect r
 - Maintains aspect ratio lock after swapping
 
 **Smart Constraints**
-- Optional aspect ratio limiting prevents exceeding maximum dimensions (2048px)
+- Optional aspect ratio limiting prevents exceeding maximum dimensions
 - Automatic rounding to multiples of 8 for optimal generation
-- Maintains dimensions within valid range (64-2048px)
+- Maintains dimensions within valid range (customizable min-max values)
 
 ---
 
@@ -73,14 +73,25 @@ A simple extension for Stable Diffusion WebUI that provides intelligent aspect r
 
 ---
 
-## Configuration
+## 🔧 Configuration
 
 Navigate to **Settings → Aspect Ratio+** to customize:
 
 ### Aspect Ratio Controls
 - **Enable Aspect Ratio Controls** - Toggle the ratio dropdown on/off
 - **Available Aspect Ratios** - Comma-separated list (e.g., `1:1, 2:3, 3:4, 16:9`)
-- **Enforce Aspect Ratio Limits** - Prevent dimensions from exceeding 2048px when ratio is active
+- **Enforce Aspect Ratio Limits** - Prevent dimensions from exceeding maximum when ratio is active
+
+### Dimension Settings
+- **Dimension Settings Source** - Choose between:
+  - **UI Settings** (default) - Uses Stable Diffusion WebUI's default dimension settings
+  - **Extension Settings** - Uses custom values defined below
+- **Minimum Dimension** - Minimum allowed dimension value (64-2048px)
+  - *Used when "Extension Settings" is selected*
+  - Default: 64px
+- **Maximum Dimension** - Maximum allowed dimension value (2048-4096px)
+  - *Used when "Extension Settings" is selected*
+  - Default: 2048px
 
 ### Dimension Presets
 - **Enable Dimension Presets Button** - Show/hide the presets button
@@ -90,7 +101,7 @@ Navigate to **Settings → Aspect Ratio+** to customize:
 
 ---
 
-## Installation
+## 📦 Installation
 
 1. Navigate to your Stable Diffusion WebUI extensions folder
 2. Clone this repository:

@@ -2,8 +2,6 @@
 const _OFF   = 'Off';
 const _LOCK  = '🔒';
 const _IMAGE = '🖼️';
-const _MAX   = 2048;
-const _MIN   = 64;
 
 const _IMAGE_INPUT_CONTAINER_IDS = [
     'img2img_image',
@@ -12,6 +10,28 @@ const _IMAGE_INPUT_CONTAINER_IDS = [
     'inpaint_sketch',
     'img_inpaint_base'
 ];
+
+// ====== Get dimension settings ======
+const getDimensionSettings = () => {
+    const source = opts?.arp_settings_source || 'UI Settings';
+
+    let min_val, max_val;
+
+    if (source === 'UI Settings') {
+        // Get values from hidden widgets
+        min_val = opts?.arp_ui_min_hidden || 64;
+        max_val = opts?.arp_ui_max_hidden || 2048;
+    } else {
+        // Use extension settings
+        min_val = opts?.arp_min_dimension || 64;
+        max_val = opts?.arp_max_dimension || 2048;
+    }
+
+    return {
+        _MIN: Math.round(min_val),
+        _MAX: Math.round(max_val)
+    };
+};
 
 // ====== Utility functions ======
 const getSelectedImage2ImageTab = () => {
@@ -30,6 +50,7 @@ const aspectRatioFromStr = (ar) => ar.includes(':') && ar.split(':').map(Number)
 const reverseAspectRatio = (ar) => ar.includes(':') && ar.split(':').reverse().join(':');
 
 const getMaxAllowedValue = (aspectRatio, isWidth) => {
+    const { _MAX } = getDimensionSettings();
     if (!aspectRatio || aspectRatio === _OFF) return _MAX;
     const aspect = aspectRatio;
     const ratio = isWidth ? aspect : 1 / aspect;
@@ -37,6 +58,7 @@ const getMaxAllowedValue = (aspectRatio, isWidth) => {
 };
 
 const clampToBoundaries = (w, h) => {
+    const { _MIN, _MAX } = getDimensionSettings();
     w = Math.min(Math.max(w, _MIN), _MAX);
     h = Math.min(Math.max(h, _MIN), _MAX);
     return [w, h];
@@ -498,10 +520,8 @@ class AspectRatioController {
         this.h = new SliderController(hEl);
         this.inputs = [...this.w.inputs, ...this.h.inputs];
 
-        this.w.update('min', _MIN);
-        this.w.update('max', _MAX);
-        this.h.update('min', _MIN);
-        this.h.update('max', _MAX);
+        // Apply dimension settings to sliders
+        this.updateSliderLimits();
 
         this.inputs.forEach((inp) => inp.addEventListener('change', (e) => this.maintainAspectRatio(e.target)));
 
@@ -512,6 +532,14 @@ class AspectRatioController {
         this.swapBtnCtrl = this.toolboxCtrl.swapBtnCtrl;
 
         this.setAspectRatio(_OFF);
+    }
+
+    updateSliderLimits() {
+        const { _MIN, _MAX } = getDimensionSettings();
+        this.w.update('min', _MIN);
+        this.w.update('max', _MAX);
+        this.h.update('min', _MIN);
+        this.h.update('max', _MAX);
     }
 
     setAspectRatio(ar) {
@@ -555,7 +583,7 @@ class AspectRatioController {
             const value = +changed.value;
 
             const applyLimit = opts?.arp_aspect_ratio_limit ?? true;
-            const maxVal = applyLimit ? getMaxAllowedValue(aspect, isW) : _MAX;
+            const maxVal = applyLimit ? getMaxAllowedValue(aspect, isW) : getDimensionSettings()._MAX;
 
             if (isW) {
                 w = Math.min(value, maxVal);
