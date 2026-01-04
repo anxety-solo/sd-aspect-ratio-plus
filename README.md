@@ -37,7 +37,7 @@ A simple extension for Stable Diffusion WebUI that provides intelligent aspect r
 
 ---
 
-### 🧩 Dimension Presets (txt2img only)
+### 🧩 Dimension Presets
 
 **Quick Access Popup**
 - One-click button opens a floating preset selector

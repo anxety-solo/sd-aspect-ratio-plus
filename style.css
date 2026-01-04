@@ -11,10 +11,21 @@
     gap: 6px !important;
 }
 
+/* Grid layout for img2img when there are 4+ buttons */
+#img2img_size_toolbox:has(> :nth-child(4)) {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px !important;
+}
+#img2img_size_toolbox:has(> :nth-child(4)) > * {
+    width: 100% !important;
+}
+
 /* Button Base Styles */
 #txt2img_ratio select,
 #img2img_ratio select,
 #txt2img_presets_btn,
+#img2img_presets_btn,
 #txt2img_res_switch_btn,
 #img2img_res_switch_btn,
 #img2img_detect_image_size_btn {
@@ -26,7 +37,8 @@
 }
 #txt2img_ratio select:focus,
 #img2img_ratio select:focus,
-#txt2img_presets_btn:focus {
+#txt2img_presets_btn:focus,
+#img2img_presets_btn:focus {
     outline: none;
     box-shadow: none;
 }
@@ -54,7 +66,8 @@
 }
 
 /* Presets Button */
-#txt2img_presets_btn {
+#txt2img_presets_btn,
+#img2img_presets_btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -66,11 +79,13 @@
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     cursor: pointer;
 }
-#txt2img_presets_btn:hover {
+#txt2img_presets_btn:hover,
+#img2img_presets_btn:hover {
     background: var(--background-fill-secondary);
 }
 
-#txt2img_presets_btn svg {
+#txt2img_presets_btn svg,
+#img2img_presets_btn svg {
     fill: var(--block-label-text-color);
 }
 

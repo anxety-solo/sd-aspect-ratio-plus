@@ -488,8 +488,13 @@ class ToolboxController {
             this.aspectRatioCtrl.ratioSelectCtrl = this.ratioSelectCtrl;
         }
 
-        // 2. Presets Button (only for txt2img and if enabled)
-        if (this.page === 'txt2img' && opts?.arp_presets_show) {
+        // 2. Presets Button (based on settings)
+        const presetsMode = opts?.arp_presets_show || 'Only txt2img';
+        const showPresets = 
+            presetsMode === 'txt2img & img2img' ||
+            (presetsMode === 'Only txt2img' && this.page === 'txt2img');
+        
+        if (showPresets) {
             this.presetsButtonCtrl = new PresetsButtonController(this.page, this.aspectRatioCtrl);
             this.wrapper.appendChild(this.presetsButtonCtrl.createButton());
         }
@@ -498,7 +503,15 @@ class ToolboxController {
         this.swapBtnCtrl = new SwapButtonController(this.page, this.aspectRatioCtrl);
         this.wrapper.appendChild(this.swapBtnCtrl.createButton());
         this.aspectRatioCtrl.swapBtnCtrl = this.swapBtnCtrl;
-
+        
+        // 4. Detect Size Button (img2img only)
+        if (this.page === 'img2img') {
+            const detectSizeBtn = gradioApp().getElementById('img2img_detect_image_size_btn');
+            if (detectSizeBtn) {
+                this.wrapper.appendChild(detectSizeBtn);
+            }
+        }
+        
         originalSwapBtn.replaceWith(this.wrapper);
 
         return this.wrapper;

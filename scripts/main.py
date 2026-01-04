@@ -42,7 +42,7 @@ DEFAULT_VALUES = {
     ARP_ASPECT_RATIO_SHOW_KEY: True,
     ARP_ASPECT_RATIOS_KEY: '1:1, 2:3, 3:4, 4:5, 9:16',
     ARP_ASPECT_RATIO_LIMIT_KEY: True,
-    ARP_PRESETS_SHOW_KEY: True,
+    ARP_PRESETS_SHOW_KEY: 'Only txt2img',
     ARP_PRESETS_KEY: DEFAULT_PRESETS,
     ARP_PRESETS_COLUMNS_KEY: 2,
     ARP_PRESETS_AUTOLABEL_KEY: True,
@@ -225,9 +225,10 @@ def on_settings():
         OptionInfo(
             default=DEFAULT_VALUES[ARP_PRESETS_SHOW_KEY],
             label='Enable Dimension Presets Button',
-            component=gr.Checkbox,
+            component=gr.Radio,
+            component_args={'choices': ['Off', 'Only txt2img', 'txt2img & img2img']},
             section=SECTION
-        ).info('Shows dimension presets button in txt2img tab')
+        ).info('Choose where to show the dimension presets button')
     )
 
     opts.add_option(
