@@ -214,7 +214,7 @@ def on_settings():
             default=DEFAULT_VALUES[ARP_MAX_DIMENSION_KEY],
             label='Maximum Dimension',
             component=gr.Slider,
-            component_args={'minimum': 2048, 'maximum': 4096, 'step': 64},
+            component_args={'minimum': 2048, 'maximum': 8192, 'step': 64},
             section=SECTION
         ).info('Maximum allowed dimension value (used when "Extension Settings" is selected)')
     )

@@ -89,7 +89,7 @@ Navigate to **Settings → Aspect Ratio+** to customize:
 - **Minimum Dimension** - Minimum allowed dimension value (64-2048px)
   - *Used when "Extension Settings" is selected*
   - Default: 64px
-- **Maximum Dimension** - Maximum allowed dimension value (2048-4096px)
+- **Maximum Dimension** - Maximum allowed dimension value (2048-8192px)
   - *Used when "Extension Settings" is selected*
   - Default: 2048px
 
