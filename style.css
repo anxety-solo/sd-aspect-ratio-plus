@@ -205,6 +205,19 @@
     color: var(--button-primary-text-color);
 }
 
+/* Temporary Auto Ratio - Highlight Select */
+#txt2img_ratio select.ar-select-temp-active,
+#img2img_ratio select.ar-select-temp-active {
+    border-color: #f59e0b;
+}
+
+#txt2img_ratio select option.ar-option-temp,
+#img2img_ratio select option.ar-option-temp {
+    color: #f59e0b;
+    font-style: italic;
+    font-weight: 700;
+}
+
 /* Scrollbar */
 .arp-presets-content::-webkit-scrollbar {
     width: 6px;

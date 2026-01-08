@@ -15,6 +15,7 @@ ARP_PRESETS_SHOW_KEY = 'arp_presets_show'
 ARP_PRESETS_KEY = 'arp_presets'
 ARP_PRESETS_COLUMNS_KEY = 'arp_presets_columns'
 ARP_PRESETS_AUTOLABEL_KEY = 'arp_presets_autolabel'
+ARP_PRESETS_AUTO_RATIO_KEY = 'arp_presets_auto_ratio'
 ARP_SETTINGS_SOURCE_KEY = 'arp_settings_source'
 ARP_MIN_DIMENSION_KEY = 'arp_min_dimension'
 ARP_MAX_DIMENSION_KEY = 'arp_max_dimension'
@@ -46,6 +47,7 @@ DEFAULT_VALUES = {
     ARP_PRESETS_KEY: DEFAULT_PRESETS,
     ARP_PRESETS_COLUMNS_KEY: 2,
     ARP_PRESETS_AUTOLABEL_KEY: True,
+    ARP_PRESETS_AUTO_RATIO_KEY: False,
     ARP_SETTINGS_SOURCE_KEY: 'UI Settings',
     ARP_MIN_DIMENSION_KEY: 64,
     ARP_MAX_DIMENSION_KEY: 2048
@@ -261,6 +263,16 @@ def on_settings():
             component=gr.Checkbox,
             section=SECTION
         ).info('If enabled, presets not under any ">" label will be grouped under an "Others" label')
+    )
+
+    opts.add_option(
+        ARP_PRESETS_AUTO_RATIO_KEY,
+        OptionInfo(
+            default=DEFAULT_VALUES[ARP_PRESETS_AUTO_RATIO_KEY],
+            label='Auto-detect Aspect Ratio from Preset',
+            component=gr.Checkbox,
+            section=SECTION
+        ).info('Automatically sets aspect ratio when selecting a preset')
     )
 
 on_ui_settings(on_settings)

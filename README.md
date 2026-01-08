@@ -21,7 +21,7 @@ A simple extension for Stable Diffusion WebUI that provides intelligent aspect r
 
 **Available Modes:**
 - **Off** - Free adjustment without ratio constraints
-- **Lock/🔒** - Locks the current dimensions' aspect ratio
+- **Lock/🔒** - Locks the current dimensions aspect ratio
 - **Image/🖼️** - Uses the aspect ratio from the loaded image *(img2img only)*
 - **Custom Ratios** - Any ratio you configure (e.g., 1:1, 16:9, 4:3, 2:3, etc.)
 
@@ -65,6 +65,13 @@ A simple extension for Stable Diffusion WebUI that provides intelligent aspect r
 1024 x 1024
 ```
 
+**Auto Ratio Detection**
+- When enabled, automatically detects and applies aspect ratio from selected presets
+- Intelligently matches existing ratios in your configuration
+- Creates temporary ratio options for unique preset dimensions
+- Handles orientation automatically (portrait ↔ landscape)
+- Temporary ratios are highlighted with special styling
+
 **Built-in Features:**
 - Quick settings access button (⚙️) - jumps directly to extension settings
 - Close button (×) or press ESC to dismiss
@@ -94,10 +101,17 @@ Navigate to **Settings → Aspect Ratio+** to customize:
   - Default: 2048px
 
 ### Dimension Presets
-- **Enable Dimension Presets Button** - Show/hide the presets button
+- **Enable Dimension Presets Button** - Choose where to show presets:
+  - **Off** - Disable presets button
+  - **Only txt2img** - Show only in txt2img tab
+  - **txt2img & img2img** - Show in both tabs
 - **Dimension Presets** - Multi-line text area for defining your preset list
 - **Presets Popup Columns** - Choose 1-4 columns for preset grid layout
 - **Auto-create "Others" label** - Automatically group unlabeled presets
+- **Auto Ratio Detection** - Automatically detect and apply aspect ratio when selecting presets
+  - When enabled, preset selection will automatically set matching aspect ratio
+  - Creates temporary ratio options for unique dimensions
+  - Intelligently handles orientation changes
 
 ---
 
