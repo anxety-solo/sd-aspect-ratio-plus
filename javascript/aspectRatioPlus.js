@@ -100,6 +100,29 @@ const ratioExists = (targetRatio, availableRatios) => {
     });
 };
 
+const applyImageDimensionsToController = (controller, w, h) => {
+    if (!w || !h) return;
+
+    const { MAX } = getDimensionSettings();
+
+    if (Math.max(w, h) > MAX) {
+        const scale = Math.max(w, h) / MAX;
+        w = Math.round(w / scale);
+        h = Math.round(h / scale);
+    }
+
+    w = round8(w);
+    h = round8(h);
+
+    controller.width.setValue(w);
+    controller.height.setValue(h);
+
+    controller.currentRatio = w / h;
+    controller.orientation = getOrientation(w, h);
+
+    controller.applyAspectRatio();
+};
+
 const parsePresets = (text) => {
     const autoLabel = !!opts?.arp_presets_autolabel;
     const lines = text.split('\n')
@@ -753,29 +776,11 @@ class AspectRatioController {
         const img = this.getCurrentImage();
         if (!img) return;
 
-        let w = img.naturalWidth;
-        let h = img.naturalHeight;
-
-        this.currentRatio = w / h;
-        this.orientation = getOrientation(w, h);
-
-        const { MAX } = getDimensionSettings();
-
-        // if the dimensions exceed the allowed range, divide by 2 until they fall within the range
-        const overMax = Math.max(w, h) > MAX;
-        if (overMax) {
-            const scale = Math.max(w, h) / (MAX);
-            w = Math.round(w / scale);
-            h = Math.round(h / scale);
-        }
-
-        w = round8(w);
-        h = round8(h);
-
-        this.width.setValue(w);
-        this.height.setValue(h);
-
-        this.applyAspectRatio();
+        applyImageDimensionsToController(
+            this,
+            img.naturalWidth,
+            img.naturalHeight
+        );
     }
 
     getCurrentImage() {
@@ -923,34 +928,16 @@ const setupImg2ImgImageHandlers = (controller) => {
         if (!file) return;
 
         const img = new Image();
-
-        // cache‑bust
-        img.src = URL.createObjectURL(file);
+        img.src = URL.createObjectURL(file);  // cache‑bust
 
         img.onload = () => {
-            let w = img.naturalWidth;
-            let h = img.naturalHeight;
             URL.revokeObjectURL(img.src);
 
-            if (!w || !h) return;
-
-            const { MAX } = getDimensionSettings();
-            if (Math.max(w, h) > MAX) {
-                const scale = Math.max(w, h) / MAX;
-                w = Math.round(w / scale);
-                h = Math.round(h / scale);
-            }
-
-            w = round8(w);
-            h = round8(h);
-
-            controller.width.setValue(w);
-            controller.height.setValue(h);
-
-            controller.currentRatio = w / h;
-            controller.orientation = getOrientation(w, h);
-
-            controller.applyAspectRatio();
+            applyImageDimensionsToController(
+                controller,
+                img.naturalWidth,
+                img.naturalHeight
+            );
         };
     };
 
@@ -960,7 +947,6 @@ const setupImg2ImgImageHandlers = (controller) => {
 
         const input = container.querySelector('input');
         if (input) {
-            console.log(input)
             input.parentElement.addEventListener('drop', handleImageLoad);
             input.addEventListener('change', (e) => {
                 e.target.value = '';
