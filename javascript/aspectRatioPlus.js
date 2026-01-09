@@ -195,6 +195,29 @@ class RatioSelectController {
         }
     }
 
+    getCurrentListOrientation() {
+        if (!this.select) return null;
+
+        const ratios = [...this.select.options]
+            .map(opt => opt.value)
+            .filter(val => !this.defaultModes.includes(val))
+            .map(val => parseRatio(val))
+            .filter(Boolean);
+
+        if (ratios.length === 0) return null;
+
+        // Count orientations
+        let landscape = 0, portrait = 0;
+        ratios.forEach(r => {
+            if (r.w > r.h) landscape++;
+            else if (r.w < r.h) portrait++;
+        });
+
+        if (landscape > portrait) return ORIENTATION.LANDSCAPE;
+        if (portrait > landscape) return ORIENTATION.PORTRAIT;
+        return null; // Mixed or equal
+    }
+
     addTempRatio(width, height) {
         if (!this.select) return;
 
@@ -208,6 +231,9 @@ class RatioSelectController {
         const availableRatios = [...this.select.options]
             .map(opt => opt.value)
             .filter(val => !this.defaultModes.includes(val));
+
+        // Get current list orientation
+        const currentListOrientation = this.getCurrentListOrientation();
 
         // Check if ratio already exists (considering orientation)
         if (ratioExists(ratio, availableRatios)) {
@@ -247,6 +273,13 @@ class RatioSelectController {
         }
 
         // Ratio doesn't exist - create temp option
+        // But first, check if we need to reverse the entire list to match target orientation
+        if (currentListOrientation &&
+            targetOrientation !== ORIENTATION.SQUARE &&
+            currentListOrientation !== targetOrientation) {
+            this.reverseAllOptions();
+        }
+
         const ratioParsed = parseRatio(ratio);
 
         let displayRatio;
@@ -718,13 +751,31 @@ class AspectRatioController {
 
     applyImageRatio() {
         const img = this.getCurrentImage();
-        if (img) {
-            const w = img.naturalWidth || 1;
-            const h = img.naturalHeight || 1;
-            this.currentRatio = w / h;
-            this.orientation = getOrientation(w, h);
-            this.applyAspectRatio();
+        if (!img) return;
+
+        let w = img.naturalWidth;
+        let h = img.naturalHeight;
+
+        this.currentRatio = w / h;
+        this.orientation = getOrientation(w, h);
+
+        const { MAX } = getDimensionSettings();
+
+        // if the dimensions exceed the allowed range, divide by 2 until they fall within the range
+        const overMax = Math.max(w, h) > MAX;
+        if (overMax) {
+            const scale = Math.max(w, h) / (MAX);
+            w = Math.round(w / scale);
+            h = Math.round(h / scale);
         }
+
+        w = round8(w);
+        h = round8(h);
+
+        this.width.setValue(w);
+        this.height.setValue(h);
+
+        this.applyAspectRatio();
     }
 
     getCurrentImage() {
@@ -872,13 +923,34 @@ const setupImg2ImgImageHandlers = (controller) => {
         if (!file) return;
 
         const img = new Image();
+
+        // cache‑bust
         img.src = URL.createObjectURL(file);
+
         img.onload = () => {
-            const ratio = img.naturalWidth / img.naturalHeight;
-            controller.currentRatio = ratio;
-            controller.orientation = getOrientation(img.naturalWidth, img.naturalHeight);
-            controller.applyAspectRatio();
+            let w = img.naturalWidth;
+            let h = img.naturalHeight;
             URL.revokeObjectURL(img.src);
+
+            if (!w || !h) return;
+
+            const { MAX } = getDimensionSettings();
+            if (Math.max(w, h) > MAX) {
+                const scale = Math.max(w, h) / MAX;
+                w = Math.round(w / scale);
+                h = Math.round(h / scale);
+            }
+
+            w = round8(w);
+            h = round8(h);
+
+            controller.width.setValue(w);
+            controller.height.setValue(h);
+
+            controller.currentRatio = w / h;
+            controller.orientation = getOrientation(w, h);
+
+            controller.applyAspectRatio();
         };
     };
 
@@ -888,8 +960,12 @@ const setupImg2ImgImageHandlers = (controller) => {
 
         const input = container.querySelector('input');
         if (input) {
+            console.log(input)
             input.parentElement.addEventListener('drop', handleImageLoad);
-            input.addEventListener('change', handleImageLoad);
+            input.addEventListener('change', (e) => {
+                e.target.value = '';
+                handleImageLoad(e);
+            });
         }
     });
 
