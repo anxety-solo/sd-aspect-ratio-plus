@@ -22,8 +22,8 @@
 }
 
 /* Button Base Styles */
-#txt2img_ratio select,
-#img2img_ratio select,
+#txt2img_aspect_ratio_btn,
+#img2img_aspect_ratio_btn,
 #txt2img_presets_btn,
 #img2img_presets_btn,
 #txt2img_res_switch_btn,
@@ -35,8 +35,8 @@
     max-height: var(--btn-size) !important;
     box-sizing: border-box !important;
 }
-#txt2img_ratio select:focus,
-#img2img_ratio select:focus,
+#txt2img_aspect_ratio_btn:focus,
+#img2img_aspect_ratio_btn:focus,
 #txt2img_presets_btn:focus,
 #img2img_presets_btn:focus {
     outline: none;
@@ -44,8 +44,8 @@
 }
 
 /* Ratio Select Styles */
-#txt2img_ratio select,
-#img2img_ratio select {
+#txt2img_aspect_ratio_btn,
+#img2img_aspect_ratio_btn {
     appearance: none;
     padding: 0;
     font-size: 14px;
@@ -60,8 +60,8 @@
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     cursor: pointer;
 }
-#txt2img_ratio select:hover,
-#img2img_ratio select:hover {
+#txt2img_aspect_ratio_btn:hover,
+#img2img_aspect_ratio_btn:hover {
     background: var(--background-fill-secondary);
 }
 
@@ -206,13 +206,13 @@
 }
 
 /* Temporary Auto Ratio - Highlight Select */
-#txt2img_ratio select.ar-select-temp-active,
-#img2img_ratio select.ar-select-temp-active {
+#txt2img_aspect_ratio_btn.ar-select-temp-active,
+#img2img_aspect_ratio_btn.ar-select-temp-active {
     border-color: #f59e0b;
 }
 
-#txt2img_ratio select option.ar-option-temp,
-#img2img_ratio select option.ar-option-temp {
+#txt2img_aspect_ratio_btn option.ar-option-temp,
+#img2img_aspect_ratio_btn option.ar-option-temp {
     color: #f59e0b;
     font-style: italic;
     font-weight: 700;

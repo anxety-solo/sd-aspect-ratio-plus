@@ -174,16 +174,12 @@ class RatioSelectController {
         this.defaultModes = defaultModes;
         this.options = [...new Set([...defaultModes, ...getAvailableRatios()])];
         this.element = null;
-        this.select = null;
         this.tempRatio = null;
     }
 
     build() {
-        const wrapper = document.createElement('div');
-        wrapper.id = `${this.page}_ratio`;
-
         const select = document.createElement('select');
-        select.id = `${this.page}_select_aspect_ratio`;
+        select.id = `${this.page}_aspect_ratio_btn`;
         select.title = 'Aspect Ratio';
         select.innerHTML = this.options
             .map(opt => `<option class="ar-option" value="${opt}">${opt}</option>`)
@@ -191,11 +187,8 @@ class RatioSelectController {
 
         select.addEventListener('change', () => this.handleChange());
 
-        wrapper.appendChild(select);
-        this.element = wrapper;
-        this.select = select;
-
-        return wrapper;
+        this.element = select;
+        return select;
     }
 
     handleChange() {
@@ -209,19 +202,19 @@ class RatioSelectController {
         this.onChange?.(value);
     }
 
-    getValue() { return this.select?.value || MODE.OFF; }
+    getValue() { return this.element?.value || MODE.OFF; }
 
     setValue(value) {
-        if (this.select) {
-            this.select.value = value;
+        if (this.element) {
+            this.element.value = value;
             this.onChange?.(value);
         }
     }
 
     getCurrentListOrientation() {
-        if (!this.select) return null;
+        if (!this.element) return null;
 
-        const ratios = [...this.select.options]
+        const ratios = [...this.element.options]
             .map(opt => opt.value)
             .filter(val => !this.defaultModes.includes(val))
             .map(val => parseRatio(val))
@@ -242,7 +235,7 @@ class RatioSelectController {
     }
 
     addTempRatio(width, height) {
-        if (!this.select) return;
+        if (!this.element) return;
 
         const ratio = simplifyRatio(width, height);
         const targetOrientation = getOrientation(width, height);
@@ -251,7 +244,7 @@ class RatioSelectController {
         this.removeTempRatio();
 
         // Get the current list of options from select (without temp)
-        const availableRatios = [...this.select.options]
+        const availableRatios = [...this.element.options]
             .map(opt => opt.value)
             .filter(val => !this.defaultModes.includes(val));
 
@@ -275,19 +268,19 @@ class RatioSelectController {
                     // If orientations match, use as is
                     if (existingOrientation === targetOrientation || targetOrientation === ORIENTATION.SQUARE) {
                         // Directly set value and trigger change
-                        this.select.value = existingRatio;
+                        this.element.value = existingRatio;
                         const event = new Event('change', { bubbles: true });
-                        this.select.dispatchEvent(event);
+                        this.element.dispatchEvent(event);
                         return;
                     } else {
                         // Orientations don't match - need to reverse all options
                         this.reverseAllOptions();
 
-                        // After reversing, the ratio we want should now match orientation
+                        // After reversing, the ratio should now match orientation
                         const reversedRatio = reverseRatio(existingRatio);
-                        this.select.value = reversedRatio;
+                        this.element.value = reversedRatio;
                         const event = new Event('change', { bubbles: true });
-                        this.select.dispatchEvent(event);
+                        this.element.dispatchEvent(event);
                         return;
                     }
                 }
@@ -296,7 +289,7 @@ class RatioSelectController {
         }
 
         // Ratio doesn't exist - create temp option
-        // But first, check if we need to reverse the entire list to match target orientation
+        // But first, check if need to reverse the entire list to match target orientation
         if (currentListOrientation &&
             targetOrientation !== ORIENTATION.SQUARE &&
             currentListOrientation !== targetOrientation) {
@@ -322,44 +315,44 @@ class RatioSelectController {
         tempOption.value = displayRatio;
         tempOption.textContent = displayRatio;
 
-        const options = [...this.select.options];
+        const options = [...this.element.options];
         const insertIndex = this.defaultModes.length;
 
         if (insertIndex < options.length) {
-            this.select.insertBefore(tempOption, options[insertIndex]);
+            this.element.insertBefore(tempOption, options[insertIndex]);
         } else {
-            this.select.appendChild(tempOption);
+            this.element.appendChild(tempOption);
         }
 
         // Add highlight class to select
-        this.select.classList.add('ar-select-temp-active');
+        this.element.classList.add('ar-select-temp-active');
 
         // Set and trigger change
-        this.select.value = displayRatio;
+        this.element.value = displayRatio;
         const event = new Event('change', { bubbles: true });
-        this.select.dispatchEvent(event);
+        this.element.dispatchEvent(event);
     }
 
     removeTempRatio() {
-        if (!this.select || !this.tempRatio) return;
+        if (!this.element || !this.tempRatio) return;
 
-        const tempOption = this.select.querySelector('.ar-option-temp');
+        const tempOption = this.element.querySelector('.ar-option-temp');
         if (tempOption) {
             // If temp ratio was selected, switch to OFF
             if (this.getValue() === this.tempRatio) {
-                this.select.value = MODE.OFF;
+                this.element.value = MODE.OFF;
             }
             tempOption.remove();
         }
 
         // Remove highlight class
-        this.select.classList.remove('ar-select-temp-active');
+        this.element.classList.remove('ar-select-temp-active');
 
         this.tempRatio = null;
     }
 
     reverseAllOptions() {
-        this.select?.querySelectorAll('.ar-option').forEach(opt => {
+        this.element?.querySelectorAll('.ar-option').forEach(opt => {
             const reversed = reverseRatio(opt.value);
             if (reversed !== opt.value) {
                 opt.value = reversed;
@@ -577,9 +570,6 @@ class PresetsButtonController {
     }
 
     build() {
-        const wrapper = document.createElement('div');
-        wrapper.id = `${this.page}_presets_box`;
-
         const btn = document.createElement('button');
         btn.id = `${this.page}_presets_btn`;
         btn.title = 'Dimension Presets';
@@ -597,10 +587,8 @@ class PresetsButtonController {
             this.popupCtrl.show(btn);
         });
 
-        wrapper.appendChild(btn);
-        this.element = wrapper;
-
-        return wrapper;
+        this.element = btn;
+        return btn;
     }
 }
 
