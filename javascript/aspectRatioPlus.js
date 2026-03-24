@@ -70,7 +70,7 @@ const getMaxForRatio = (ratio, isWidth) => {
 };
 
 const getAvailableRatios = () => {
-    return opts.arp_aspect_ratio
+    return opts?.arp_aspect_ratio
         .split(',')
         .map(r => r.trim())
         .filter(Boolean);
@@ -384,7 +384,7 @@ class PresetsPopupController {
             return;
         }
 
-        const presets = parsePresets(opts.arp_presets || '');
+        const presets = parsePresets(opts?.arp_presets || '');
         const columns = clamp(Number(opts?.arp_presets_columns || 2), 1, 4);
 
         this.popup = this.buildPopup(presets, columns);
